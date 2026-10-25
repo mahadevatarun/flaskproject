@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the code
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install libraries
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest -v
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t minishop:ci .
+
+      - name: Smoke test (start the container and call /health)
+        run: |
+          docker run -d --name shop -p 8000:8000 minishop:ci
+          for i in $(seq 1 20); do
+            if curl -fs http://localhost:8000/health; then exit 0; fi
+            sleep 1
+          done
+          docker logs shop
+          exit 1

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniShop</title>
+<style>
+  :root {
+    --bar: #12203a;
+    --bar-soft: #1d2f50;
+    --bg: #f3f5f8;
+    --card: #ffffff;
+    --ink: #17202e;
+    --muted: #67728a;
+    --line: #dfe4ec;
+    --accent: #0d7a63;
+    --accent-dark: #095f4d;
+    --danger: #c0392b;
+    --ok: #3ddc97;
+    --bad: #ff6b5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--bar);
+    color: #fff;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 12px; }
+  .brand h1 { margin: 0; font-size: 22px; letter-spacing: -0.2px; }
+  .brand small { color: #9fb3d6; font-size: 13px; }
+  .badges { display: flex; gap: 10px; font-size: 13px; }
+  .badge {
+    background: var(--bar-soft);
+    padding: 6px 14px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #8a94a8; }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.25); }
+  .dot.bad { background: var(--bad); }
+
+  main {
+    max-width: 1000px;
+    margin: 28px auto 60px;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .panel h2 { margin: 0 0 14px; font-size: 17px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    background: #fff;
+  }
+  input:focus-visible, button:focus-visible {
+    outline: 3px solid rgba(13, 122, 99, 0.35);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+  .actions { display: flex; gap: 8px; margin-top: 16px; }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    border-radius: 6px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover { background: var(--accent-dark); }
+  button.danger { color: var(--danger); }
+  #msg { min-height: 20px; margin-top: 12px; font-size: 13px; color: var(--danger); }
+
+  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .toolbar h2 { margin: 0; font-size: 17px; }
+  .toolbar h2 span { color: var(--muted); font-weight: 400; }
+  #q { max-width: 240px; }
+
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card .name { font-size: 16px; font-weight: 600; word-break: break-word; }
+  .card .price { font-size: 22px; color: var(--accent); margin: 6px 0 2px; font-weight: 600; }
+  .card .id { font-size: 12px; color: var(--muted); }
+  .card .row { display: flex; gap: 8px; margin-top: 14px; }
+  .card .row button { padding: 6px 12px; font-size: 13px; }
+
+  #empty {
+    background: var(--card);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    button { transition: background 0.15s; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>MiniShop</h1>
+    <small>by JustCode</small>
+  </div>
+  <div class="badges">
+    <div class="badge"><span id="dot" class="dot"></span><span id="hstate">Checking API</span></div>
+    <div class="badge" title="Version read from the VERSION file">Version <strong id="ver">{{ version }}</strong></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2 id="formTitle">Add a product</h2>
+    <label for="name">Product name</label>
+    <input id="name" maxlength="80" placeholder="Notebook">
+    <label for="price">Price in rupees</label>
+    <input id="price" type="number" min="0" step="0.01" placeholder="120">
+    <div class="actions">
+      <button id="save" class="primary">Add product</button>
+      <button id="cancel" hidden>Cancel</button>
+    </div>
+    <div id="msg" role="alert"></div>
+  </section>
+
+  <section>
+    <div class="toolbar">
+      <h2>Products <span id="count"></span></h2>
+      <!--SEARCH-->
+    </div>
+    <div id="grid"></div>
+    <div id="empty" hidden></div>
+  </section>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let all = [];
+  let editingId = null;
+
+  async function api(path, options) {
+    const response = await fetch(path, options);
+    if (response.status === 204) return null;
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Something went wrong");
+    return data;
+  }
+
+  async function checkHealth() {
+    try {
+      const h = await api("/health");
+      $("dot").className = "dot ok";
+      $("hstate").textContent = "API healthy";
+      $("ver").textContent = h.version;
+    } catch (e) {
+      $("dot").className = "dot bad";
+      $("hstate").textContent = "API not responding";
+    }
+  }
+
+  async function load() {
+    all = await api("/products");
+    render();
+  }
+
+  function render() {
+    const list = all;
+    $("count").textContent = "(" + list.length + ")";
+    const grid = $("grid");
+    grid.textContent = "";
+    const empty = $("empty");
+    empty.hidden = list.length > 0;
+    empty.textContent = all.length
+      ? "No products match your search."
+      : "No products yet. Add your first one using the form.";
+
+    list.forEach((p) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = p.name;
+
+      const price = document.createElement("div");
+      price.className = "price";
+      price.textContent = "\u20B9" + Number(p.price).toFixed(2);
+
+      const id = document.createElement("div");
+      id.className = "id";
+      id.textContent = "Product #" + p.id;
+
+      const row = document.createElement("div");
+      row.className = "row";
+      const edit = document.createElement("button");
+      edit.textContent = "Edit";
+      edit.onclick = () => startEdit(p);
+      const del = document.createElement("button");
+      del.textContent = "Delete";
+      del.className = "danger";
+      del.onclick = () => remove(p);
+      row.append(edit, del);
+
+      card.append(name, price, id, row);
+      grid.append(card);
+    });
+  }
+
+  function startEdit(p) {
+    editingId = p.id;
+    $("name").value = p.name;
+    $("price").value = p.price;
+    $("formTitle").textContent = "Edit product #" + p.id;
+    $("save").textContent = "Save changes";
+    $("cancel").hidden = false;
+    $("msg").textContent = "";
+    $("name").focus();
+  }
+
+  function resetForm() {
+    editingId = null;
+    $("name").value = "";
+    $("price").value = "";
+    $("formTitle").textContent = "Add a product";
+    $("save").textContent = "Add product";
+    $("cancel").hidden = true;
+  }
+
+  async function save() {
+    $("msg").textContent = "";
+    const name = $("name").value.trim();
+    const priceText = $("price").value;
+    if (!name) { $("msg").textContent = "Enter a product name."; return; }
+    if (priceText === "" || Number(priceText) < 0) { $("msg").textContent = "Enter a price of 0 or more."; return; }
+    const body = JSON.stringify({ name: name, price: Number(priceText) });
+    const options = { method: editingId ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: body };
+    try {
+      await api(editingId ? "/products/" + editingId : "/products", options);
+      resetForm();
+      await load();
+    } catch (e) {
+      $("msg").textContent = e.message;
+    }
+  }
+
+  async function remove(p) {
+    if (!confirm("Delete " + p.name + "?")) return;
+    try {
+      await api("/products/" + p.id, { method: "DELETE" });
+      if (editingId === p.id) resetForm();
+      await load();
+    } catch (e) {
+      $("msg").textContent = e.message;
+    }
+  }
+
+  $("save").addEventListener("click", save);
+  $("cancel").addEventListener("click", resetForm);
+  // SEARCH_LISTENER
+
+  checkHealth();
+  setInterval(checkHealth, 15000);
+  load();
+</script>
+</body>
+</html>
