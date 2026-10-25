@@ -164,7 +164,7 @@
   <section>
     <div class="toolbar">
       <h2>Products <span id="count"></span></h2>
-      <!--SEARCH-->
+      <input id="q" type="search" placeholder="Search products" aria-label="Search products">
     </div>
     <div id="grid"></div>
     <div id="empty" hidden></div>
@@ -202,7 +202,8 @@
   }
 
   function render() {
-    const list = all;
+    const q = $("q").value.trim().toLowerCase();
+    const list = all.filter((p) => p.name.toLowerCase().includes(q));
     $("count").textContent = "(" + list.length + ")";
     const grid = $("grid");
     grid.textContent = "";
@@ -294,7 +295,7 @@
 
   $("save").addEventListener("click", save);
   $("cancel").addEventListener("click", resetForm);
-  // SEARCH_LISTENER
+  $("q").addEventListener("input", render);
 
   checkHealth();
   setInterval(checkHealth, 15000);
